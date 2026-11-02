@@ -11,3 +11,23 @@ AND ep.path_number = p.path_number
 WHERE p.path_is_electrified = TRUE
 AND ep.date_and_time_start >= DATE_TRUNC('year', CURRENT_DATE)
 AND ep.date_and_time_end - ep.date_and_time_start > INTERVAL '1 month';
+
+DROP TABLE IF EXISTS tram_paths_29;
+
+SELECT
+    p.depot_number,
+    p.path_number,
+    p.purpose,
+    p.path_length,
+    p.path_is_clear,
+    p.path_is_electrified,
+    ep.date_and_time_start,
+    ep.date_and_time_end,
+    ep.tram_number,
+    ep.additional_information
+INTO tram_paths_29
+FROM public.paths p
+JOIN public.employment_paths ep
+    ON p.depot_number = ep.depot_number
+    AND p.path_number = ep.path_number
+WHERE ep.date_and_time_start::date = CURRENT_DATE;
