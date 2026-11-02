@@ -11,7 +11,7 @@ AND ep.path_number = p.path_number
 WHERE p.path_is_electrified = TRUE
 AND ep.date_and_time_start >= DATE_TRUNC('year', CURRENT_DATE)
 AND ep.date_and_time_end - ep.date_and_time_start > INTERVAL '1 month';
-
+-- создать таблицу, содержащую данные 1 запроса с указанием даты и времени выезда трамваев
 DROP TABLE IF EXISTS tram_paths_29;
 
 SELECT
