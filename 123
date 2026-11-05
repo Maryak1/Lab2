@@ -1,0 +1,73 @@
+SELECT DISTINCT
+    p.depot_number,
+    p.path_number,
+    p.purpose,
+    p.path_length,
+    p.path_is_clear,
+    p.path_is_electrified
+FROM paths p
+JOIN employment_paths ep 
+    ON p.depot_number = ep.depot_number 
+   AND p.path_number  = ep.path_number
+WHERE DATE(ep.date_and_time_start) = CURRENT_DATE
+   OR DATE(ep.date_and_time_end)   = CURRENT_DATE;
+   SELECT DISTINCT ep.tram_number
+FROM employment_paths ep
+JOIN paths p 
+    ON ep.depot_number = p.depot_number 
+   AND ep.path_number  = p.path_number
+WHERE p.path_is_electrified = TRUE
+  AND EXTRACT(YEAR FROM ep.date_and_time_start) = EXTRACT(YEAR FROM CURRENT_DATE)
+  AND (ep.date_and_time_end - ep.date_and_time_start) > INTERVAL '1 month';
+  SELECT DISTINCT ep.tram_number
+FROM employment_paths ep
+JOIN paths p 
+    ON ep.depot_number = p.depot_number 
+   AND ep.path_number  = p.path_number
+WHERE p.path_is_electrified = TRUE
+  AND EXTRACT(YEAR FROM ep.date_and_time_start) = EXTRACT(YEAR FROM CURRENT_DATE)
+  AND (ep.date_and_time_end - ep.date_and_time_start) > INTERVAL '1 month';
+  CREATE TABLE paths_today AS
+SELECT DISTINCT
+    p.depot_number,
+    p.path_number,
+    p.purpose,
+    p.path_length,
+    p.path_is_clear,
+    p.path_is_electrified,
+    ep.date_and_time_end          -- дата и время выезда
+FROM paths p
+JOIN employment_paths ep 
+    ON p.depot_number = ep.depot_number 
+   AND p.path_number  = ep.path_number
+WHERE DATE(ep.date_and_time_start) = CURRENT_DATE
+   OR DATE(ep.date_and_time_end)   = CURRENT_DATE;
+   INSERT INTO paths_today (
+    depot_number, path_number, purpose, path_length,
+    path_is_clear, path_is_electrified, date_and_time_end
+)
+SELECT DISTINCT
+    p.depot_number,
+    p.path_number,
+    p.purpose,
+    p.path_length,
+    p.path_is_clear,
+    p.path_is_electrified,
+    ep.date_and_time_end
+FROM paths p
+JOIN employment_paths ep 
+    ON p.depot_number = ep.depot_number 
+   AND p.path_number  = ep.path_number
+WHERE LOWER(p.purpose) LIKE '%ремонт%'
+  AND EXTRACT(DOW FROM ep.date_and_time_start) IN (0, 6)   -- 0 = воскресенье, 6 = суббота
+  AND NOT EXISTS (                                           -- защита от дубликатов
+        SELECT 1 
+        FROM paths_today pt
+        WHERE pt.depot_number = p.depot_number
+          AND pt.path_number  = p.path_number
+          AND pt.date_and_time_end = ep.date_and_time_end
+  );
+  UPDATE paths_today
+SET path_is_clear = TRUE
+WHERE path_is_electrified = TRUE;
+DELETE FROM paths_today
