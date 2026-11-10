@@ -1,16 +1,11 @@
 -- 1. Вывести информацию обо всех путях, задействованных сегодня для выезда трамваев
-SELECT
-    p.*,
-    ep.date_and_time_start,
-    ep.date_and_time_end,
-    ep.tram_number,
-    ep.additional_information
+SELECT DISTINCT
+    p.*
 FROM paths p
 JOIN employment_paths ep
     ON p.depot_number = ep.depot_number
    AND p.path_number = ep.path_number
 WHERE ep.date_and_time_start::date = CURRENT_DATE;
-
 
 -- 2. Вывести номера трамваев, занимавших электрифицированные пути больше 1 месяца непрерывно в текущем году
 SELECT DISTINCT
@@ -56,7 +51,14 @@ JOIN employment_paths ep
     ON p.depot_number = ep.depot_number
    AND p.path_number = ep.path_number
 WHERE LOWER(p.purpose) LIKE '%ремонт%'
-  AND EXTRACT(DOW FROM ep.date_and_time_start) IN (0, 6);
+  AND EXTRACT(DOW FROM ep.date_and_time_start) IN (0, 6)
+  AND NOT EXISTS (
+        SELECT 1
+        FROM tram_paths_29 t
+        WHERE t.depot_number = p.depot_number
+          AND t.path_number = p.path_number
+          AND t.date_and_time_start = ep.date_and_time_start
+  );
 
 
 -- 5. В созданной таблице освободить все электрифицированные пути
